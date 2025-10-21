@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>F1: Corrida da Qualidade</title>
+
+<!-- Tailwind -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Fonte Orbitron -->
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --neon-red:#E10600;
+  --neon-blue:#00BFFF;
+  --asphalt:#0b0b0f;
+  --text:#f3f6ff;
+  --gold:#FFD500;
+  --ok:#03c988;
+}
+html,body{
+  height:100%; margin:0;
+  font-family:'Orbitron',system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  background: radial-gradient(1000px 600px at 50% -10%, rgba(0,0,0,.6) 0%, rgba(8,8,10,1) 40%), linear-gradient(180deg,#050608,#040405);
+  color:var(--text);
+}
+
+/* Cards + título */
+.f1-card{background:linear-gradient(180deg,rgba(18,20,24,.86),rgba(8,9,12,.86));border:1px solid rgba(255,255,255,.05);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.65)}
+.f1-title{text-shadow:0 0 12px rgba(0,191,255,.15);letter-spacing:.06em}
+
+/* HUD */
+.hud{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.hud-pill{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:8px 12px;min-width:110px;text-align:center;font-weight:700}
+.hud-pill small{display:block;font-size:11px;color:rgba(255,255,255,.65)}
+#total-timer{color:var(--neon-blue);text-shadow:0 0 10px rgba(0,191,255,.25);font-variant-numeric:tabular-nums}
+
+/* Botões */
+.action-btn{background:linear-gradient(180deg,#12141a,#0b0d11);border:1px solid rgba(255,255,255,.06);color:#eaf1ff;border-radius:10px;font-weight:700;padding:.6rem .9rem;letter-spacing:.06em;transition:transform .12s ease,border-color .12s ease,box-shadow .12s ease}
+.action-btn:hover{transform:translateY(-2px);border-color:rgba(0,191,255,.28)}
+
+/* Opções */
+.option-btn{background:linear-gradient(180deg,#0f1116,#0b0d11);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:.9rem 1rem;text-align:left;font-weight:600;transition:transform .08s ease,border-color .08s ease}
+.option-btn:hover:not(:disabled){transform:translateY(-2px);border-color:rgba(255,213,0,.35)}
+
+.correct{background:linear-gradient(180deg,rgba(3,201,136,.2),rgba(3,201,136,.08))!important;border-color:rgba(3,201,136,.6)!important}
+.incorrect{background:linear-gradient(180deg,rgba(225,6,0,.2),rgba(225,6,0,.08))!important;border-color:rgba(225,6,0,.6)!important}
+
+/* Pista */
+#progress-track{position:relative;height:56px;border-radius:12px;border:1px solid rgba(255,255,255,.06);background:linear-gradient(90deg,rgba(255,255,255,.02),rgba(255,255,255,.01));overflow:hidden}
+#car,#ghost-car{position:absolute;bottom:6px;font-size:2.25rem;transform:scaleX(-1);transition:left 900ms ease;will-change:left}
+#ghost-car{opacity:.45;filter:grayscale(80%)}
+
+/* Linha de chegada (apenas quadriculado) */
+.finish-wall{position:absolute;right:0;top:0;bottom:0;width:10px;background-image:linear-gradient(45deg,white 25%,black 25%,black 50%,white 50%,white 75%,black 75%,black);background-size:16px 16px}
+
+/* Boost */
+.boost{animation:boostTrail .8s ease-out;filter:drop-shadow(0 0 8px rgba(0,191,255,.6))}
+@keyframes boostTrail{0%{transform:scaleX(-1);text-shadow:0 0 0 transparent}50%{text-shadow:0 0 18px rgba(0,191,255,.8)}100%{transform:scaleX(-1);text-shadow:0 0 0 transparent}}
+
+/* Timer por pergunta */
+#timer-bar{height:8px;background:linear-gradient(90deg,#03c988,#ffd500);transition:width 1s linear,background .4s}
+.timer-wrap{height:8px;background:rgba(255,255,255,.06);border-radius:8px;overflow:hidden}
+
+/* Ranking/pódio */
+.ranking-row{display:grid;grid-template-columns:1fr .9fr .8fr .9fr .9fr .6fr .35fr;gap:8px;align-items:center;padding:8px;border-radius:8px;background:rgba(255,255,255,.03)}
+.ranking-row + .ranking-row{margin-top:8px}
+.rank-medal{font-weight:900}
+@keyframes pulseGlow{0%,100%{box-shadow:0 0 10px rgba(255,255,255,.12), inset 0 0 8px rgba(255,255,255,.06)}50%{box-shadow:0 0 26px rgba(255,215,0,.45), inset 0 0 12px rgba(255,255,255,.14)}}
+.top1{animation:pulseGlow 1.8s infinite alternate;border:1px solid rgba(255,215,0,.5)}
+.top2{animation:pulseGlow 2s infinite alternate;border:1px solid rgba(192,192,192,.45)}
+.top3{animation:pulseGlow 2.2s infinite alternate;border:1px solid rgba(205,127,50,.45)}
+
+/* Modais */
+.modal{display:none}
+.rounded-input{border-radius:8px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.03);padding:.7rem;width:100%;color:var(--text);font-weight:700}
+
+/* Responsivo ranking */
+@media (max-width:1024px){.ranking-row{grid-template-columns:1fr .9fr .8fr .8fr .8fr .6fr .35fr;font-size:13px}}
+@media (max-width:640px){.ranking-row{grid-template-columns:1fr .8fr .7fr .7fr .7fr .6fr .35fr;font-size:12px}}
+</style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
+
+<!-- CAPA -->
+<div id="cover-modal" class="fixed inset-0 bg-black flex flex-col items-center justify-center z-50 p-4 text-center">
+  <div class="absolute inset-0 bg-black bg-opacity-70"></div>
+  <div class="relative max-w-2xl">
+    <h1 class="f1-title text-5xl md:text-6xl font-bold mb-6">F1: Corrida da Qualidade</h1>
+    <p class="text-gray-300 mb-8">“Na pista da qualidade, cada segundo conta. Está pronta para correr?”</p>
+    <button id="cover-btn" class="action-btn text-2xl px-10 py-4">Correr</button>
+  </div>
+</div>
+
+<!-- JOGO -->
+<div id="main-game-wrapper" class="hidden w-full max-w-4xl mx-auto">
+  <header class="text-center mb-6">
+    <h1 class="f1-title text-3xl md:text-4xl font-bold mb-3">F1: Corrida da Qualidade</h1>
+    <div class="hud">
+      <div class="hud-pill"><small>Pergunta</small><span id="question-counter">1/5</span></div>
+      <div class="hud-pill"><small>Pontos</small><span id="score-display">0</span></div>
+      <div class="hud-pill"><small>Tempo</small><span id="total-timer">00:00.000</span></div>
+      <button id="ranking-btn" class="action-btn">🏆 Ranking</button>
+      <button id="restart-btn-top" class="action-btn">Reiniciar</button>
+      <button id="sound-toggle" class="action-btn" title="Som">🔇</button>
+    </div>
+  </header>
+
+  <div id="progress-track" class="w-full h-14 mb-6 relative f1-card p-3">
+    <div id="ghost-car-container" class="absolute left-0 bottom-1 h-full w-full">
+      <div id="ghost-car">🏎️</div>
+    </div>
+    <div id="car-container" class="absolute left-0 bottom-1 h-full w-full">
+      <div id="car">🏎️</div>
+    </div>
+    <div class="finish-wall"></div>
+  </div>
+
+  <main id="game-card" class="f1-card p-6 md:p-8">
+    <div class="flex justify-between items-center mb-4 text-sm">
+      <p id="question-counter-alt" class="text-gray-400">Pronto para acelerar?</p>
+      <p id="score-display-alt" class="font-bold text-yellow-400">Pontos: 0</p>
+    </div>
+
+    <div class="timer-wrap mb-5"><div id="timer-bar" style="width:100%"></div></div>
+
+    <p id="question-text" class="text-base md:text-lg mb-6 leading-relaxed">Carregando pergunta...</p>
+    <div id="options-container" class="space-y-3"></div>
+  </main>
+</div>
+
+<!-- FIM DE JOGO -->
+<div id="end-game-modal" class="modal fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+  <div class="f1-card p-8 text-center max-w-md w-full">
+    <h2 id="modal-title" class="f1-title text-2xl font-bold mb-3">🏁 Fim da Corrida!</h2>
+    <p id="modal-text" class="text-gray-300 mb-6"></p>
+    <div id="save-score-container" class="flex flex-col items-center gap-3 mb-6">
+      <input type="text" id="player-name" placeholder="Nome" class="rounded-input">
+      <input type="text" id="player-area" placeholder="Área (ex.: PXS)" class="rounded-input">
+      <input type="text" id="player-edv" placeholder="EDV" class="rounded-input">
+      <button id="save-score-btn" class="action-btn py-2 w-full">Salvar</button>
+    </div>
+    <button id="restart-btn" class="action-btn py-2 w-full">Correr Novamente</button>
+  </div>
+</div>
+
+<!-- RANKING -->
+<div id="ranking-modal" class="modal fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+  <div class="f1-card p-8 text-center max-w-3xl w-full mx-auto">
+    <h2 class="f1-title text-2xl font-bold mb-6">🏆 Ranking dos Campeões 🏆</h2>
+
+    <div id="ranking-list" class="space-y-2 text-left max-h-96 overflow-y-auto pr-1 text-sm"></div>
+
+    <div class="flex items-center justify-between mt-6 gap-3">
+      <div class="text-left text-xs text-gray-400">* Ícone 🗑️ remove registro (senha exigida). Atualiza automaticamente a cada 30s enquanto esta janela estiver aberta.</div>
+      <div class="flex gap-3">
+        <button id="clear-ranking-btn" class="action-btn py-2 px-4" title="Limpar tudo (senha)">🗑️ Limpar Ranking</button>
+        <button id="close-ranking-btn" class="action-btn py-2 px-6">Fechar</button>
+        <button id="new-game-from-ranking-btn" class="action-btn py-2 px-6">Novo Jogo</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/** CONFIG JSONBin + ADMIN **/
+const JSONBIN_BIN_ID = "68f76e0643b1c97be975aad6";
+const JSONBIN_ACCESS_KEY = "$2a$10$nzDzKk7W7RpjuzthtI/ad.616BUtdM9LBrf1q2VtfFwLBLLhqhRQK";
+const JSONBIN_BASE = "https://api.jsonbin.io/v3";
+const JSONBIN_READ_URL = `${JSONBIN_BASE}/b/${JSONBIN_BIN_ID}/latest`;
+const JSONBIN_UPDATE_URL = `${JSONBIN_BASE}/b/${JSONBIN_BIN_ID}`;
+const ADMIN_PASSWORD = "SEMANAquali2025";
+
+/** DOM **/
+const coverModal = document.getElementById('cover-modal');
+const coverBtn = document.getElementById('cover-btn');
+const mainGameWrapper = document.getElementById('main-game-wrapper');
+
+const questionText = document.getElementById('question-text');
+const optionsContainer = document.getElementById('options-container');
+const questionCounter = document.getElementById('question-counter');
+const scoreDisplay = document.getElementById('score-display');
+const questionCounterAlt = document.getElementById('question-counter-alt');
+const scoreDisplayAlt = document.getElementById('score-display-alt');
+const timerBar = document.getElementById('timer-bar');
+
+const endGameModal = document.getElementById('end-game-modal');
+const modalTitle = document.getElementById('modal-title');
+const modalText = document.getElementById('modal-text');
+const playerNameInput = document.getElementById('player-name');
+const playerAreaInput = document.getElementById('player-area');
+const playerEdvInput = document.getElementById('player-edv');
+const saveScoreBtn = document.getElementById('save-score-btn');
+
+const rankingBtn = document.getElementById('ranking-btn');
+const rankingModal = document.getElementById('ranking-modal');
+const rankingList = document.getElementById('ranking-list');
+const closeRankingBtn = document.getElementById('close-ranking-btn');
+const newGameFromRankingBtn = document.getElementById('new-game-from-ranking-btn');
+const clearRankingBtn = document.getElementById('clear-ranking-btn');
+
+const totalTimerEl = document.getElementById('total-timer');
+const soundToggleBtn = document.getElementById('sound-toggle');
+const restartBtnTop = document.getElementById('restart-btn-top');
+const restartBtn = document.getElementById('restart-btn');
+
+const carContainer = document.getElementById('car-container');
+const ghostCarContainer = document.getElementById('ghost-car-container');
+const carEl = document.getElementById('car');
+
+/** Game state **/
+let allQuestions = [
+  { question: "O que deve ser feito quando um problema grave de qualidade é identificado na linha?", options: ["Esperar o próximo turno", "Usar o sinal de parada e iniciar o processo 8D", "Continuar até o líder chegar", "Enviar as peças assim mesmo"], answer: 1 },
+  { question: "Quem tem a autoridade para reiniciar o processo após uma parada com cordão Andon?", options: ["Qualquer operador", "O engenheiro da qualidade", "Apenas o líder da equipe", "O supervisor de logística"], answer: 2 },
+  { question: "Qual é o objetivo principal do cordão Andon?", options: ["Decorar a estação", "Avisar quando acaba o material", "Permitir que o operador sinalize problemas imediatamente", "Controlar a velocidade da linha"], answer: 2 },
+  { question: "As instruções de trabalho devem ser:", options: ["Guardadas na gaveta", "Claramente exibidas na estação", "Explicadas só no treinamento inicial", "Orais, sem documento"], answer: 1 },
+  { question: "O que deve ser verificado regularmente conforme o Plano de Controle?", options: ["Apenas as horas extras", "Apenas o consumo de energia", "Parâmetros do processo e características de teste", "O uniforme do operador"], answer: 2 },
+  { question: "Qual documento ajuda a identificar riscos de falhas no processo?", options: ["Checklist de limpeza", "FMEA", "Lista de presença", "Pedido de compra"], answer: 1 },
+  { question: "Qual deve ser a condição dos dispositivos de teste usados na produção?", options: ["Qualquer um serve", "Devem ser calibrados e identificados", "Só usados se sobrar tempo", "Testados apenas quando quebram"], answer: 1 },
+  { question: "Para confirmar que sistemas automáticos de inspeção funcionam bem, é necessário:", options: ["Aguardar reclamações do cliente", "Verificar estabilidade conforme o padrão", "Resetar a máquina diariamente", "Usar apenas observação visual"], answer: 1 },
+  { question: "Quais são os 4 pilares da manutenção?", options: ["Lubrificação, pintura, limpeza, descarte", "Eliminação de perdas, manutenção autônoma, manutenção planejada, gestão de peças de reposição", "Troca de óleo, troca de filtro, ajuste de rolo, limpeza da mesa", "Apenas manutenção corretiva"], answer: 1 },
+  { question: "O que deve ser feito após a troca de uma ferramenta?", options: ["Continuar normally", "Avaliar a ferramenta quanto a danos", "Guardar no armário sem checar", "Jogar fora imediatamente"], answer: 1 }
+];
+let questions = [];
+let totalQuestions = 0;
+let currentQuestionIndex = 0;
+let score = 0;
+let scoreHistory = [];
+let timer;
+let timeLeft;
+const TIME_PER_QUESTION = 15;
+
+let totalStartTime = 0;
+let totalEndTime = 0;
+let totalTimerInterval = null;
+
+let soundOn = false;
+let audioCtx = null;
+
+let rankingRefreshInterval = null; // auto-refresh (30s) quando ranking aberto
+
+/** Helpers **/
+function nowMs(){ return performance.now(); }
+function formatMs(ms){
+  const m = Math.floor(ms/60000);
+  const s = Math.floor((ms%60000)/1000);
+  const msRest = ms%1000;
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(msRest).padStart(3,'0')}`;
+}
+function playBeep(freq=880,time=120,type='sine',vol=0.05){
+  if(!soundOn) return;
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.value = vol;
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start();
+    setTimeout(()=>o.stop(), time);
+  }catch(e){}
+}
+function playCorrect(){ playBeep(1200,120,'square',0.06); setTimeout(()=>playBeep(1500,110,'square',0.05),100); }
+function playWrong(){ playBeep(220,180,'sawtooth',0.06); }
+function playFinish(){ playBeep(600,120,'triangle',0.06); setTimeout(()=>playBeep(900,120,'triangle',0.06),130); setTimeout(()=>playBeep(1200,120,'triangle',0.06),260); }
+
+function endGameMessage(percent){
+  if(percent >= 0.9) return "🏆 Pole Position! Sua volta foi perfeita!";
+  if(percent >= 0.6) return "🥈 Subiu ao pódio! Continue acelerando!";
+  return "🏁 Você completou a corrida — a excelência é treino constante!";
+}
+
+function uniqueKeyOfEntry(e){
+  return `${e.name}|${e.area}|${e.edv}|${e.score}|${e.totalTimeMs}|${e.date}`;
+}
+
+/** JSONBin **/
+async function fetchRankingFromBin(){
+  try{
+    const res = await fetch(JSONBIN_READ_URL, {
+      headers: { "X-Access-Key": JSONBIN_ACCESS_KEY, "X-Bin-Meta": "false" }
+    });
+    if(!res.ok) throw new Error("Falha ao ler ranking: " + res.status);
+    const data = await res.json();
+    if(Array.isArray(data)) return data;
+    if(data && Array.isArray(data.record)) return data.record;
+    return [];
+  }catch(e){
+    console.error("fetchRankingFromBin:", e);
+    return [];
+  }
+}
+function getRankingLocalFallback(){
+  try{
+    const ranking = localStorage.getItem('f1QualityRaceRanking');
+    return ranking ? JSON.parse(ranking) : [];
+  } catch(e){ return []; }
+}
+async function getRanking(){
+  const online = await fetchRankingFromBin();
+  if(online && online.length) return online;
+  return getRankingLocalFallback();
+}
+function sortRanking(list){
+  return list.sort((a,b) => (b.score - a.score) || (a.totalTimeMs - b.totalTimeMs) || (a.random - b.random));
+}
+async function updateRankingOnBin(newList){
+  const res = await fetch(JSONBIN_UPDATE_URL, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", "X-Access-Key": JSONBIN_ACCESS_KEY },
+    body: JSON.stringify({ record: newList })
+  });
+  if(!res.ok){
+    const t = await res.text();
+    throw new Error("Falha ao atualizar ranking: " + res.status + " - " + t);
+  }
+}
+
+/** Fluxo do jogo **/
+function startGame(){
+  currentQuestionIndex = 0;
+  score = 0;
+  scoreHistory = [];
+  const shuffled = [...allQuestions].sort(()=>0.5-Math.random());
+  questions = shuffled.slice(0, 5); // 5 perguntas
+  totalQuestions = questions.length;
+
+  playerNameInput.value = '';
+  playerAreaInput.value = '';
+  playerEdvInput.value = '';
+  saveScoreBtn.disabled = false; saveScoreBtn.textContent = 'Salvar';
+
+  updateScoreDisplay();
+  loadGhostData();
+  updateCarPosition();
+
+  totalStartTime = nowMs();
+  clearInterval(totalTimerInterval);
+  totalTimerInterval = setInterval(()=>{
+    const elapsed = Math.max(0, Math.round(nowMs() - totalStartTime));
+    totalTimerEl.textContent = formatMs(elapsed);
+  }, 50);
+
+  loadQuestion();
+}
+
+async function loadGhostData(){
+  const ranking = await getRanking();
+  if(ranking.length > 0 && ranking[0].progress){
+    window.ghostProgress = ranking[0].progress;
+    ghostCarContainer.classList.remove('hidden');
+    updateGhostPosition();
+  } else {
+    window.ghostProgress = [];
+    ghostCarContainer.classList.add('hidden');
+  }
+}
+
+function loadQuestion(){
+  if(currentQuestionIndex >= totalQuestions){
+    setTimeout(showEndGameModal, 400);
+    return;
+  }
+
+  const q = questions[currentQuestionIndex];
+  questionCounter.textContent = `Pergunta ${currentQuestionIndex + 1}/${totalQuestions}`;
+  questionCounterAlt.textContent = `Pergunta ${currentQuestionIndex + 1}/${totalQuestions}`;
+  questionText.textContent = q.question;
+
+  optionsContainer.innerHTML = '';
+  const mapped = q.options.map((txt, idx)=>({txt, idx}));
+  mapped.sort(()=>0.5 - Math.random());
+  mapped.forEach(({txt, idx})=>{
+    const b = document.createElement('button');
+    b.className = 'option-btn w-full';
+    b.textContent = txt;
+    b.onclick = ()=>selectAnswer(idx, b);
+    optionsContainer.appendChild(b);
+  });
+
+  clearInterval(timer);
+  timeLeft = TIME_PER_QUESTION;
+  timerBar.style.width = '100%';
+  timerBar.style.background = 'linear-gradient(90deg,#03c988,#ffd500)';
+  timer = setInterval(()=>{
+    timeLeft--;
+    const pct = (timeLeft / TIME_PER_QUESTION) * 100;
+    timerBar.style.width = `${pct}%`;
+    if(timeLeft < TIME_PER_QUESTION/3) timerBar.style.background = 'linear-gradient(90deg,#E10600,#FF6B5A)';
+    else if(timeLeft < TIME_PER_QUESTION/1.5) timerBar.style.background = 'linear-gradient(90deg,#ffd500,#ff8c00)';
+    if(timeLeft <= 0){
+      clearInterval(timer);
+      handleTimeOut();
+    }
+  }, 1000);
+
+  updateGhostPosition();
+}
+
+function handleTimeOut(){
+  const buttons = optionsContainer.querySelectorAll('button');
+  buttons.forEach(b=>b.disabled = true);
+  scoreHistory.push(score);
+  currentQuestionIndex++;
+  setTimeout(loadQuestion, 900);
+}
+
+function selectAnswer(selectedIndex, btn){
+  clearInterval(timer);
+  const q = questions[currentQuestionIndex];
+  const isCorrect = selectedIndex === q.answer;
+
+  const buttons = optionsContainer.querySelectorAll('button');
+  buttons.forEach(b=>b.disabled = true);
+
+  if(isCorrect){
+    btn.classList.add('correct');
+    const points = timeLeft * 10;
+    score += points;
+    updateScoreDisplay();
+    carEl.classList.add('boost');
+    playCorrect();
+    setTimeout(()=>carEl.classList.remove('boost'), 800);
+    setTimeout(updateCarPosition, 180);
+  } else {
+    btn.classList.add('incorrect');
+    playWrong();
+  }
+
+  scoreHistory.push(score);
+  currentQuestionIndex++;
+  setTimeout(loadQuestion, 900);
+}
+
+function updateScoreDisplay(){
+  scoreDisplay.textContent = String(score);
+  scoreDisplayAlt.textContent = `Pontos: ${score}`;
+}
+
+function updateCarPosition(){
+  const maxPossibleScore = totalQuestions * (TIME_PER_QUESTION * 10);
+  const progress = maxPossibleScore > 0 ? (score / maxPossibleScore) * 100 : 0;
+  carContainer.style.left = `${Math.min(progress, 90)}%`;
+}
+function updateGhostPosition(){
+  if(!window.ghostProgress || window.ghostProgress.length === 0) return;
+  const maxPossibleScore = totalQuestions * (TIME_PER_QUESTION * 10);
+  const ghostScore = window.ghostProgress[currentQuestionIndex] || window.ghostProgress[window.ghostProgress.length-1] || 0;
+  const progress = maxPossibleScore > 0 ? (ghostScore / maxPossibleScore) * 100 : 0;
+  ghostCarContainer.style.left = `${Math.min(progress, 90)}%`;
+}
+
+function showEndGameModal(){
+  clearInterval(totalTimerInterval);
+  totalEndTime = nowMs();
+  const totalElapsed = Math.max(0, Math.round(totalEndTime - totalStartTime));
+  totalTimerEl.textContent = formatMs(totalElapsed);
+
+  const maxPossibleScore = totalQuestions * (TIME_PER_QUESTION * 10);
+  const perf = maxPossibleScore ? (score / maxPossibleScore) : 0;
+  modalTitle.textContent = '🏁 Fim da Corrida!';
+  modalText.innerHTML = `${endGameMessage(perf)}<br>Você fez ${score} pontos em ${formatMs(totalElapsed)}.`;
+
+  endGameModal.style.display = 'flex';
+  playFinish();
+}
+
+/** Ranking **/
+async function displayRanking(){
+  const ranking = await getRanking();
+  rankingList.innerHTML = '';
+
+  if(!ranking || ranking.length === 0){
+    rankingList.innerHTML = '<p class="text-gray-400 text-center">O pódio ainda está vazio. Seja o primeiro campeão!</p>';
+    return;
+  }
+
+  sortRanking(ranking).slice(0,200).forEach((entry, index)=>{
+    const medals = ['🥇','🥈','🥉'];
+    const medal = medals[index] || `${index+1}.`;
+    const row = document.createElement('div');
+    const key = uniqueKeyOfEntry(entry);
+    row.className = 'ranking-row ' + (index===0?'top1':index===1?'top2':index===2?'top3':'');
+    row.innerHTML = `
+      <div class="font-bold"><span class="rank-medal">${medal}</span> ${entry.name}</div>
+      <div class="text-gray-300">${entry.area}</div>
+      <div class="text-gray-400">${entry.edv}</div>
+      <div class="text-yellow-400 text-center">${entry.score} pts</div>
+      <div class="text-blue-300 text-right">${formatMs(entry.totalTimeMs)}</div>
+      <div class="text-gray-500 text-right text-xs">${entry.date || ''}</div>
+      <div class="text-right">
+        <button class="action-btn px-2 py-1 text-xs delete-entry-btn" data-key="${key}" title="Excluir este registro">🗑️</button>
+      </div>
+    `;
+    rankingList.appendChild(row);
+  });
+
+  // Bind exclusão individual (com senha)
+  document.querySelectorAll('.delete-entry-btn').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const pwd = prompt('Digite a senha de administrador para excluir este registro:');
+      if(pwd !== ADMIN_PASSWORD){ alert('Senha incorreta!'); return; }
+      const key = btn.getAttribute('data-key');
+      try{
+        const current = await getRanking();
+        const newList = current.filter(e => uniqueKeyOfEntry(e) !== key);
+        await updateRankingOnBin(newList);
+        localStorage.setItem('f1QualityRaceRanking', JSON.stringify(newList.slice(0,10)));
+        await displayRanking();
+        alert('Registro removido com sucesso.');
+      }catch(e){
+        console.error(e);
+        alert('Erro ao remover. Tente novamente.');
+      }
+    });
+  });
+}
+
+async function saveScore(){
+  const name = playerNameInput.value.trim();
+  const area = playerAreaInput.value.trim();
+  const edv  = playerEdvInput.value.trim();
+
+  if(!name || !area || !edv){
+    [playerNameInput,playerAreaInput,playerEdvInput].forEach(inp=>{
+      if(!inp.value.trim()) inp.style.borderColor='red'; else inp.style.borderColor='';
+    });
+    return;
+  }
+  [playerNameInput,playerAreaInput,playerEdvInput].forEach(inp=>inp.style.borderColor='');
+
+  const totalElapsed = Math.max(0, Math.round(totalEndTime - totalStartTime));
+  const entry = {
+    name, area, edv,
+    score,
+    totalTimeMs: totalElapsed,
+    date: new Date().toLocaleDateString('pt-BR'),
+    random: Math.random(),
+    progress: scoreHistory
+  };
+
+  try{
+    const current = await getRanking();
+    const updated = sortRanking([...current, entry]).slice(0, 200);
+    await updateRankingOnBin(updated);
+    localStorage.setItem('f1QualityRaceRanking', JSON.stringify(updated.slice(0,10)));
+
+    // Vai direto pro ranking
+    endGameModal.style.display = 'none';
+    await openRankingModal();
+  }catch(e){
+    console.error("saveScore error:", e);
+    saveScoreBtn.textContent = 'Erro ao salvar';
+  }
+}
+
+async function openRankingModal(){
+  await displayRanking();
+  rankingModal.style.display = 'flex';
+
+  // Auto-refresh a cada 30s ENQUANTO o modal estiver aberto
+  stopRankingAutoRefresh();
+  rankingRefreshInterval = setInterval(async ()=>{
+    await displayRanking();
+  }, 30000);
+}
+function closeRanking(){
+  rankingModal.style.display = 'none';
+  stopRankingAutoRefresh();
+}
+function stopRankingAutoRefresh(){
+  if(rankingRefreshInterval){
+    clearInterval(rankingRefreshInterval);
+    rankingRefreshInterval = null;
+  }
+}
+
+/** Eventos **/
+window.onload = ()=>{
+  coverModal.style.display = 'flex';
+  mainGameWrapper.style.display = 'none';
+  endGameModal.style.display = 'none';
+  rankingModal.style.display = 'none';
+  soundOn = false; soundToggleBtn.textContent = '🔇';
+};
+
+coverBtn.addEventListener('click', ()=>{
+  coverModal.style.display = 'none';
+  mainGameWrapper.style.display = 'block';
+  startGame();
+});
+
+rankingBtn.addEventListener('click', openRankingModal);
+closeRankingBtn.addEventListener('click', closeRanking);
+
+newGameFromRankingBtn.addEventListener('click', ()=>{
+  closeRanking();
+  startGame();
+});
+
+clearRankingBtn.addEventListener('click', async ()=>{
+  const pwd = prompt('Digite a senha de administrador para LIMPAR todo o ranking:');
+  if(pwd !== ADMIN_PASSWORD){ alert('Senha incorreta!'); return; }
+  if(!confirm('Tem certeza que deseja apagar TODO o ranking? Esta ação não pode ser desfeita.')) return;
+  try{
+    await updateRankingOnBin([]);
+    localStorage.setItem('f1QualityRaceRanking', JSON.stringify([]));
+    await displayRanking();
+    alert('Ranking limpo com sucesso!');
+  }catch(e){
+    console.error(e);
+    alert('Erro ao limpar. Tente novamente.');
+  }
+});
+
+saveScoreBtn.addEventListener('click', saveScore);
+
+restartBtnTop.addEventListener('click', ()=>{
+  closeRanking();
+  endGameModal.style.display = 'none';
+  startGame();
+});
+restartBtn.addEventListener('click', ()=>{
+  endGameModal.style.display = 'none';
+  startGame();
+});
+
+soundToggleBtn.addEventListener('click', ()=>{
+  soundOn = !soundOn;
+  soundToggleBtn.textContent = soundOn ? '🔈' : '🔇';
+  if(soundOn) playBeep(880,100,'square',0.05);
+});
+</script>
+</body>
+</html>
