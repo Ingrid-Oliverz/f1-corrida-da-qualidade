@@ -212,16 +212,27 @@ const carEl = document.getElementById('car');
 
 /** Game state **/
 let allQuestions = [
-  { question: "O que deve ser feito quando um problema grave de qualidade é identificado na linha?", options: ["Esperar o próximo turno", "Usar o sinal de parada e iniciar o processo 8D", "Continuar até o líder chegar", "Enviar as peças assim mesmo"], answer: 1 },
-  { question: "Quem tem a autoridade para reiniciar o processo após uma parada com cordão Andon?", options: ["Qualquer operador", "O engenheiro da qualidade", "Apenas o líder da equipe", "O supervisor de logística"], answer: 2 },
-  { question: "Qual é o objetivo principal do cordão Andon?", options: ["Decorar a estação", "Avisar quando acaba o material", "Permitir que o operador sinalize problemas imediatamente", "Controlar a velocidade da linha"], answer: 2 },
-  { question: "As instruções de trabalho devem ser:", options: ["Guardadas na gaveta", "Claramente exibidas na estação", "Explicadas só no treinamento inicial", "Orais, sem documento"], answer: 1 },
-  { question: "O que deve ser verificado regularmente conforme o Plano de Controle?", options: ["Apenas as horas extras", "Apenas o consumo de energia", "Parâmetros do processo e características de teste", "O uniforme do operador"], answer: 2 },
-  { question: "Qual documento ajuda a identificar riscos de falhas no processo?", options: ["Checklist de limpeza", "FMEA", "Lista de presença", "Pedido de compra"], answer: 1 },
-  { question: "Qual deve ser a condição dos dispositivos de teste usados na produção?", options: ["Qualquer um serve", "Devem ser calibrados e identificados", "Só usados se sobrar tempo", "Testados apenas quando quebram"], answer: 1 },
-  { question: "Para confirmar que sistemas automáticos de inspeção funcionam bem, é necessário:", options: ["Aguardar reclamações do cliente", "Verificar estabilidade conforme o padrão", "Resetar a máquina diariamente", "Usar apenas observação visual"], answer: 1 },
-  { question: "Quais são os 4 pilares da manutenção?", options: ["Lubrificação, pintura, limpeza, descarte", "Eliminação de perdas, manutenção autônoma, manutenção planejada, gestão de peças de reposição", "Troca de óleo, troca de filtro, ajuste de rolo, limpeza da mesa", "Apenas manutenção corretiva"], answer: 1 },
-  { question: "O que deve ser feito após a troca de uma ferramenta?", options: ["Continuar normally", "Avaliar a ferramenta quanto a danos", "Guardar no armário sem checar", "Jogar fora imediatamente"], answer: 1 }
+  { question: "O que deve ser feito quando um problema grave de qualidade é identificado na linha?", options: ["Esperar o próximo turno", "Parar o processo e acionar o líder", "Continuar o processo até o líder chegar", "Intervir acionando o botão de emergência, interrompendo o processo], answer: 1 }, 
+  { question: "Quem tem a autoridade para reiniciar o processo após uma parada?", options: ["Qualquer operador", "O planejador da qualidade", "Apenas o líder da equipe", "O supervisor de logística"], answer: 2 }, 
+  { question: "As instruções de trabalho devem ser:", options: ["Guardadas na gaveta", "Claramente exibidas na estação", "Explicadas só no treinamento inicial", "Orais, sem documento"], answer: 1 }, 
+  { question: "Qual documento ajuda a identificar riscos de falhas no processo?", options: ["Checklist de limpeza", "Análise de modos e efeitos de falhas (FMEA)", "Instrução de Trabalho", "Ordem de Trabalho"], answer: 1 }, 
+  { question: "Qual deve ser a condição dos dispositivos de teste usados na produção?", options: ["Qualquer um serve", "Devem ser calibrados e identificados", "Só calibrados se sobrar tempo", "Testados apenas quando quebram"], answer: 1 }, 
+  { question: "Para confirmar que sistemas automáticos de inspeção funcionam bem, é necessário:", options: ["Aguardar reclamações do cliente", "Verificar estabilidade conforme o padrão", "Resetar a máquina diariamente", "Usar apenas observação visual"], answer: 1 }, 
+  { question: "O que deve ser feito após a troca de uma ferramenta?", options: ["Continuar normal", " Guardar no armário sem checar ", "Avaliar a ferramenta quanto a danos ", "Jogar fora imediatamente"], answer: 2 }, 
+  { question: "Em relação às caixas verdes e vermelhas, qual é a regra? ", options: ["Verde é para peças ruins, vermelho para boas", "Tanto faz a cor", "Verde e vermelho fazem parte da decoração", "Verde é para peças boas, vermelho para peças ruins"], answer:3 }, 
+  { question: "O retrabalho só é permitido se:", options: ["For rápido e sem supervisão", "O operador decidir sozinho", "O supervisor não perceber", "Usar o equipamento original e respeitar limites de tempo/quantidade"], answer:3 }, 
+  { question: "Quem deve seguir os padrões de sucateamento e entrega de peças?", options: ["Apenas líderes", "Todos os membros da equipe", "Só engenheiros", "Apenas logística"], answer:1 }, 
+  { question: "O que significa FIFO", options: ["First In, First Out", "Fast In, Fast Out", "Full Inside, Full Outside", "Fim Interno, Fim Operacional"], answer:0 }, 
+  { question: "Por que é importante seguir FIFO no estoque?", options: ["Para usar primeiro as peças mais novas", "Para evitar bagunça visual", "Para enfeitar o almoxarifado", "Para garantir que peças mais antigas sejam usadas primeiro"], answer:3 }, 
+  { question: "As peças no ponto de uso devem ser:", options: ["Misturadas para facilitar", "Protegidas contra retirada não intencional", "Deixadas em qualquer lugar", "Retiradas sem controle"], answer:1 }, 
+  { question: "Qual é o risco de não identificar corretamente caixas com peças?", options: ["Perder espaço", "Confundir boas e ruins, gerando falhas na qualidade", "Atrapalhar a pintura da linha", "Apenas atrasar a logística"], answer:1 }, 
+  { question: "O que acontece se peças ruins forem colocadas em caixas verdes?", options: ["Não há problema", "Risco de enviar peças defeituosas ao cliente", "Ajuda no fluxo", "Facilita a contagem"], answer:1 }, 
+  { question: "Para evitar falhas repetitivas, usamos qual método?", options: ["Brainstorming", "8D", "3R", "FIFO"], answer:1 },
+  { question: "Por que a manutenção autônoma é importante?", options: ["Para liberar os engenheiros de toda responsabilidade", "Para que os operadores cuidem da máquina no dia a dia", "Para reduzir treinamentos", "Para não gastar com manutenção planejada"], answer:1 },
+  { question: "Uma caixa de sucata fora da linha de produção deve estar:", options: ["Aberta para qualquer uso", "Trancada", "Misturada com peças boas", "Sem identificação"], answer:1 },
+  { question: "Qual é a consequência de não calibrar um dispositivo de teste?", options: ["Nada acontece", "Pode gerar medições incorretas e peças defeituosas", "Economiza tempo", "Apenas aumenta o peso do equipamento"], answer:1 },
+  { question: "O que é proibido em relação a sucata:", options: ["Descartar de forma padronizada", "Etiquetar corretamente", "Armazenar em caixas vermelhas", "Usar indevidamente"], answer:1 },
+  { question: "Se uma câmera de inspeção começa a falhar, o que deve ser feito?", options: ["Continuar até dar problema", "Usar inspeção visual improvisada", "Corrigir e verificar estabilidade", "Trocar apenas no próximo mês"], answer:2 },
 ];
 let questions = [];
 let totalQuestions = 0;
@@ -635,3 +646,4 @@ soundToggleBtn.addEventListener('click', ()=>{
 </script>
 </body>
 </html>
+
